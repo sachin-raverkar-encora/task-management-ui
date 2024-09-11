@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 
 function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const hostUrl = import.meta.env.VITE_HOST_URL;
   const apiUrl = import.meta.env.VITE_API_URL;
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to store error messages
   useEffect(() => {
     const fetchCsrfToken = async () => {
       const response = await fetch(`${hostUrl}/csrf`);
@@ -26,32 +27,46 @@ function LoginPage() {
           "Content-Type": "application/json",
           "X-CSRF-TOKEN": csrfToken,
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
         // Handle successful login, e.g., redirect to dashboard
+        setErrorMessage("Login successful!");
         console.log("Login successful!");
       } else {
         // Handle login error, e.g., display error message
-        console.error("Login failed!");
+        const error = await response.json(); // Assuming the API returns error details in JSON
+        setErrorMessage(
+          "Login failed: " + error.title + " !" || "Login failed!"
+        ); // Set the error message from the API response
       }
     } catch (error) {
       console.error("An error occurred during login:", error);
+      setErrorMessage(
+        "An error occurred during login: ${error.title}. Please try again later."
+      ); // Set a generic error message for network issues, etc.
     }
   };
 
   return (
     <div>
       <h1>Login</h1>
+      {errorMessage && (
+        <div className="error-message">
+          {errorMessage}
+          <p></p>
+        </div>
+      )}{" "}
+      {/* Display error message if it exists */}
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username">Username:</label>
+          <label htmlFor="email">Email:</label>
           <input
             type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>

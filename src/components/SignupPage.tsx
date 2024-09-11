@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function SignupPage() {
   const [email, setEmail] = useState("");
@@ -6,16 +6,30 @@ function SignupPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const hostUrl = import.meta.env.VITE_API_URL;
+  const hostUrl = import.meta.env.VITE_HOST_URL;
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to store error messages
+
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const response = await fetch(`${hostUrl}/csrf`);
+      const data = await response.json(); // Or response.text() if returning plain text
+      setCsrfToken(data.csrfToken);
+    };
+
+    fetchCsrfToken();
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     try {
-      const response = await fetch(`${hostUrl}/signup`, {
+      const response = await fetch(`${apiUrl}/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrfToken,
         },
         body: JSON.stringify({
           firstName,
@@ -31,16 +45,28 @@ function SignupPage() {
         console.log("Signup successful!");
       } else {
         // Handle signup error, e.g., display error message
-        console.error("Signup failed!");
+        const error = await response.json(); // Assuming the API returns error details in JSON
+        setErrorMessage(
+          "Signup failed: " + error.title + " !" || "Signup failed!"
+        ); // Set the error message from the API response
       }
     } catch (error) {
       console.error("An error occurred during signup:", error);
+      setErrorMessage(
+        "An error occurred during login: ${error.title}. Please try again later."
+      );
     }
   };
 
   return (
     <div>
       <h1>Signup</h1>
+      {errorMessage && (
+        <div className="error-message">
+          {errorMessage}
+          <p></p>
+        </div>
+      )}{" "}
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="firstName">First Name:</label>
