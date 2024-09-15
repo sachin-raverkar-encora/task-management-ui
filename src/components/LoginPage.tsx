@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-function LoginPage() {
+interface LoginPageProps {
+  onLogin: () => void;
+}
+
+function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const hostUrl = import.meta.env.VITE_HOST_URL;
@@ -34,6 +38,8 @@ function LoginPage() {
         // Handle successful login, e.g., redirect to dashboard
         setErrorMessage("Login successful!");
         console.log("Login successful!");
+        // Call the onLogin function passed from App component
+        onLogin();
       } else {
         // Handle login error, e.g., display error message
         const error = await response.json(); // Assuming the API returns error details in JSON
